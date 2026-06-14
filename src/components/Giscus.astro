@@ -21,6 +21,9 @@ const configured = Boolean(GISCUS.repo && GISCUS.repoId && GISCUS.categoryId)
   configured && (
     <script is:inline define:vars={{ GISCUS }} data-astro-rerun>
       ;(function () {
+        // Use giscus's built-in light/dark theme. These load from giscus.app
+        // inside the iframe, so they're immune to the cross-origin / cert / CORS
+        // issues that broke the hosted custom-CSS theme.
         function currentTheme() {
           return document.documentElement.getAttribute('data-theme') === 'dark'
             ? 'dark'

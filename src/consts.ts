@@ -33,10 +33,10 @@ export const UMAMI = {
 //      and copy the four generated values into the fields below.
 // These IDs are public (they ship in the page HTML), so it's fine to commit them.
 export const GISCUS = {
-  repo: 'hyuncat/personal-website', // e.g. 'hyuncat/blog'
-  repoId: '', // R_kgD... from giscus.app
+  repo: 'hyuncat/personal-website',
+  repoId: 'R_kgDOS6F0Wg',
   category: 'Announcements', // the Discussions category to store comments in
-  categoryId: '', // DIC_kwD... from giscus.app
+  categoryId: 'DIC_kwDOS6F0Ws4C_Hfq',
   mapping: 'pathname', // one discussion per page URL path
 }
 
