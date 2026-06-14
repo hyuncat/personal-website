@@ -64,43 +64,33 @@ const websiteSchema = {
   <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
   <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
   
+  <!-- Header Image -->
+  <img
+    src="/intro.png"
+    alt="Intro header"
+    class="w-full max-w-xl mx-auto h-auto rounded-xl block"
+    loading="eager"
+    fetchpriority="high"
+  />
+
   <!-- Hero Section -->
-  <section class="relative overflow-hidden rounded-xl" style="min-height: clamp(280px, 40vh, 400px);">
+  <section class="relative overflow-hidden rounded-xl">
     <!-- Gradient Background -->
     <!-- <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" aria-hidden="true"></div> -->
-    
+
     <!-- Content -->
-    <div class="relative z-10 p-8 md:p-12">
-      <div class="flex flex-col gap-8">
+    <div class="relative z-10">
+      <div class="flex flex-col">
         <!-- Main Content -->
         <div class="flex-1 min-w-0 space-y-6">
           <!-- Heading -->
-          <div class="space-y-0" style="min-height: clamp(120px, 20vh, 180px);">
-            <img
-              src="/static/fav_white.png"
-              alt="Sarah Hong logo"
-              class="size-24 dark:block hidden"
-              width="96"
-              height="96"
-              loading="eager"
-              fetchpriority="high"
-            />
-            <img
-              src="/static/fav_black.png"
-              alt="Sarah Hong logo"
-              class="size-24 dark:hidden block"
-              width="96"
-              height="96"
-              loading="eager"
-              fetchpriority="high"
-            />
+          <div class="space-y-0">
             <h1 class="text-1xl sm:text-3xl md:text-3xl leading-[1.1] font-bold tracking-tight" style="font-variation-settings: 'wght' 700;">
-              <br class="hidden sm:block" />
               <span>Sarah Hong</span>
             </h1>
-            <p class="text-muted-foreground mt-4 leading-relaxed text-base md:text-lg max-w-xl" style="min-height: 3rem;">
-              Hi, I'm Sarah! I recently graduated from Columbia University with a degree in CS and math.
-              Here you can find my projects and assorted writings, spanning who I am and what I think about.
+            <p class="text-muted-foreground mt-4 leading-relaxed text-base md:text-lg max-w-xl">
+              Hi, I'm <a href="/about" class="text-primary font-bold hover:underline">Sarah!</a> I recently graduated from Columbia University with a degree in CS and math.
+              Here you can find my <a href="/projects" class="text-primary font-medium hover:underline">projects</a> and <a href="/blog" class="text-primary font-medium hover:underline">writings</a>, spanning who I am and what I think about.
             </p>
           </div>
           
@@ -113,6 +103,16 @@ const websiteSchema = {
             <Link href="/about" class={buttonVariants({ variant: 'outline', size: 'lg' })}>
               About me
             </Link>
+            {SOCIAL_LINKS.find(link => link.label === 'Email') && (
+              <Link
+                href={SOCIAL_LINKS.find(link => link.label === 'Email')!.href}
+                class={buttonVariants({ variant: 'outline', size: 'lg' })}
+                external
+              >
+                <Icon name="lucide:mail" class="size-4" />
+                Contact me
+              </Link>
+            )}
           </div>
           
           <!-- Social Icons -->
@@ -154,7 +154,7 @@ const websiteSchema = {
         <div class="space-y-1">
           <p class="text-sm font-semibold text-foreground">Disclaimer</p>
           <p class="text-sm text-muted-foreground leading-relaxed">
-            Code aside, I don't use AI to write any of my blog posts.
+            (Code aside) I don't use AI to write any of my blog posts.
           </p>
         </div>
       </div>
@@ -226,46 +226,13 @@ const websiteSchema = {
     </section>
   )}
 
-  <!-- CTA Section -->
-  <section class="mt-5 sm:mt-10">
-    <div class="max-w-2xl mx-auto">
-      <div class="mb-12 relative">
-        <div class="absolute inset-0 flex items-center" aria-hidden="true">
-          <div class="w-full border-t border-border"></div>
-        </div>
-        <div class="relative flex justify-center">
-          <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-background border border-border shadow-sm">
-            <span class="relative flex h-1.5 w-1.5">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-            </span>
-            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Available</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="text-center space-y-6">
-        <div class="space-y-2">
-          <h3 class="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-foreground leading-tight">
-            Let's connect
-          </h3>
-        </div>
-        <p class="text-md sm:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
-          Have questions or want to collaborate? Feel free to reach out!
-        </p>
-        <div class="pt-4">
-          {SOCIAL_LINKS.find(link => link.label === 'Email') && (
-            <Link 
-              href={SOCIAL_LINKS.find(link => link.label === 'Email')!.href} 
-              class="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-lg bg-foreground text-background text-base font-medium hover:bg-foreground/90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <Icon name="lucide:mail" class="size-4" />
-              <span>Get in touch</span>
-              <Icon name="lucide:arrow-right" class="size-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Hidden secrets entrance -->
+  <a
+    href="/secrets"
+    aria-label="Secrets"
+    title="?"
+    class="text-muted-foreground/40 border-border/40 bg-background/70 hover:text-foreground hover:border-border fixed bottom-4 right-4 z-40 rounded-full border p-2 backdrop-blur-sm transition-all hover:opacity-100"
+  >
+    <Icon name="lucide:fish-symbol" class="size-4" />
+  </a>
 </Layout>

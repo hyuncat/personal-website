@@ -1,7 +1,7 @@
 ---
 name: 'Sarah Hong'
 pronouns: 'she/her'
-avatar: '/src/assets/pfp.jpeg'
+avatar: '/pfp.jpeg'
 bio: 'CS, math, and art'
 website: 'https://hyuncat.com'
 github: 'https://github.com/hyuncat'

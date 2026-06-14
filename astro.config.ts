@@ -67,7 +67,9 @@ export default defineConfig({
     }),
     mdx(),
     react(),
-    sitemap(),
+    // Keep the gated secret pages out of the public sitemap so their slugs
+    // aren't disclosed (the middleware blocks access, but this hides the paths).
+    sitemap({ filter: (page) => !page.includes('/secret/') }),
     icon(),
   ],
   vite: {

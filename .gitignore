@@ -15,6 +15,7 @@ teaser.pptx
 ~$teaser.pptx
 .claude/
 .vscode/
+.wrangler/
 
 # Analysis and documentation files (generated/review files)
 *ANALYSIS*.md

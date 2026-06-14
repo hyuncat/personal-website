@@ -9,27 +9,25 @@ import { Icon } from 'astro-icon/components'
 const isExternalLink = (href: string) => {
   return href.startsWith('http')
 }
+
+const pathname = Astro.url.pathname
 ---
 
 <header class="bg-background/50 sticky top-0 z-10 backdrop-blur-md" transition:persist>
-  <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4 p-4">
-    <Link href="/" class="flex shrink-0 items-center gap-2 text-xl font-medium" data-astro-reload>
+  <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4 py-1 px-4">
+    <Link href="/" class="flex shrink-0 items-center gap-2 text-xl font-medium self-stretch" data-astro-reload>
       <img
-        src="/static/fav_white.png"
+        src="/static/cat_white.png"
         alt="Logo"
-        class="size-8 dark:block hidden"
-        width="32"
-        height="32"
+        class="h-[80%] w-auto dark:block hidden transition-transform duration-200 hover:scale-105"
         loading="eager"
         fetchpriority="high"
         transition:persist="logo-dark"
       />
       <img
-        src="/static/fav_black.png"
+        src="/static/cat_black.png"
         alt="Logo"
-        class="size-8 dark:hidden block"
-        width="32"
-        height="32"
+        class="h-[80%] w-auto dark:hidden block transition-transform duration-200 hover:scale-105"
         loading="eager"
         fetchpriority="high"
         transition:persist="logo-light"
@@ -37,24 +35,26 @@ const isExternalLink = (href: string) => {
      <!-- <span class="hidden min-[400px]:block">{SITE.title}</span> -->
     </Link>
     <div class="flex items-center gap-2 md:gap-4">
-      <nav class="hidden items-center gap-4 text-sm sm:gap-6 md:flex">
+      <nav id="pill-nav" class="hidden md:flex items-center bg-muted/25 dark:bg-muted/75 rounded-full p-1 text-sm gap-0 relative">
+        <span id="pill-indicator" class="absolute top-1 left-0 h-[calc(100%-0.5rem)] rounded-full bg-background shadow-sm transition-[transform,width] duration-300 ease-in-out pointer-events-none opacity-0" aria-hidden="true"></span>
         {NAV_LINKS.map((item) => {
           const isExternal = isExternalLink(item.href)
-          const isInsideLink = item.label.toLowerCase() === 'inside'
+          const isHome = item.href === '/'
           return (
-            <Link 
-              href={item.href} 
-              class={isInsideLink 
-                ? "text-primary hover:text-primary/80 capitalize transition-colors flex items-center gap-1.5 font-medium" 
-                : "text-foreground/60 hover:text-foreground/80 capitalize transition-colors flex items-center gap-1.5"}
+            <Link
+              href={item.href}
+              data-nav-href={item.href}
+              aria-label={isHome ? 'Home' : undefined}
+              class="nav-pill relative z-10 capitalize px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5 text-foreground/60 hover:text-foreground"
             >
-              <span>{item.label}</span>
+              {isHome
+                ? <Icon name="lucide:home" class="size-4" aria-hidden="true" />
+                : <span>{item.label}</span>
+              }
               {isExternal && (
-                <Icon 
-                  name="lucide:external-link" 
-                  class={isInsideLink 
-                    ? "size-3.5 opacity-80 flex-shrink-0 text-primary" 
-                    : "size-3.5 opacity-70 flex-shrink-0"} 
+                <Icon
+                  name="lucide:external-link"
+                  class="size-3.5 opacity-70 flex-shrink-0"
                   aria-hidden="true"
                 />
               )}
@@ -69,3 +69,54 @@ const isExternalLink = (href: string) => {
     </div>
   </div>
 </header>
+
+<script>
+  // Position the pill over the active link. animate=false snaps instantly
+  // (first paint, font reflow, resize); animate=true slides (navigation).
+  function positionPill(animate: boolean) {
+    const indicator = document.getElementById('pill-indicator')
+    if (!indicator) return
+
+    const pathname = window.location.pathname
+    let activeLink: HTMLElement | null = null
+
+    document.querySelectorAll<HTMLElement>('.nav-pill').forEach((link) => {
+      const href = link.dataset.navHref ?? ''
+      const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
+      // Only toggle color, never font-weight: a weight change alters the link's
+      // width, which would make the pill jitter by a pixel or two between pages
+      // where the same tab stays active (e.g. /blog -> /blog/[post]).
+      link.classList.toggle('text-foreground', isActive)
+      link.classList.toggle('text-foreground/60', !isActive)
+      if (isActive) activeLink = link
+    })
+
+    if (!activeLink) {
+      indicator.style.opacity = '0'
+      return
+    }
+
+    const link = activeLink as HTMLElement
+    // Measure on the next frame so any web-font swap reflow has settled —
+    // otherwise width/offset read stale right after navigation.
+    requestAnimationFrame(() => {
+      if (!animate) indicator.style.transition = 'none'
+      // offsetLeft/offsetWidth are relative to the positioned nav parent
+      indicator.style.transform = `translateX(${link.offsetLeft}px)`
+      indicator.style.width = `${link.offsetWidth}px`
+      indicator.style.opacity = '1'
+      if (!animate) {
+        void indicator.offsetWidth // flush, then restore the CSS transition
+        indicator.style.transition = ''
+      }
+    })
+  }
+
+  // Initial paint: snap into place (no slide-in from the edge)
+  positionPill(false)
+  // Re-snap once the web font swaps in and reflows the pills
+  document.fonts?.ready.then(() => positionPill(false))
+  window.addEventListener('resize', () => positionPill(false))
+  // Header persists across client-side navigation, so slide to the new tab
+  document.addEventListener('astro:after-swap', () => positionPill(true))
+</script>

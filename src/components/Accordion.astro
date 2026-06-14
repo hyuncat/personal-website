@@ -1,0 +1,67 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+  title: string
+  open?: boolean
+  /** Render without own border/rounding/background — for use inside a
+      connected group container that provides those. */
+  flush?: boolean
+}
+
+const { title, open = false, flush = false } = Astro.props
+---
+
+<details
+  class:list={[
+    'accordion',
+    !flush && 'border-border bg-card/50 overflow-hidden rounded-xl border',
+  ]}
+  open={open}
+>
+  <summary
+    class="hover:bg-muted/40 flex cursor-pointer list-none select-none items-center justify-between gap-3 px-4 py-3 font-medium [&::-webkit-details-marker]:hidden"
+  >
+    <span>{title}</span>
+    <Icon
+      name="lucide:chevron-right"
+      class="accordion-chevron text-muted-foreground size-4 shrink-0"
+      aria-hidden="true"
+    />
+  </summary>
+  <div class="border-border/60 border-t px-4 py-3">
+    <slot />
+  </div>
+</details>
+
+<style>
+  /* Smoothly animate open/close height on browsers that support
+     ::details-content (Chrome/Edge 131+, Safari 18.4+). Older browsers
+     simply snap open — graceful degradation, no JS required. */
+  .accordion {
+    interpolate-size: allow-keywords;
+  }
+
+  .accordion::details-content {
+    height: 0;
+    overflow: hidden;
+    transition:
+      height 0.3s ease,
+      content-visibility 0.3s ease allow-discrete;
+  }
+
+  .accordion[open]::details-content {
+    height: auto;
+  }
+
+  /* Rotate the chevron via a direct-child selector (not Tailwind's `group`)
+     so that nesting accordions works: an inner chevron only reacts to its
+     own accordion's open state, never an ancestor's. */
+  .accordion-chevron {
+    transition: rotate 0.3s ease;
+  }
+
+  .accordion[open] > summary .accordion-chevron {
+    rotate: 90deg;
+  }
+</style>
