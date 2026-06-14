@@ -1,0 +1,63 @@
+---
+title: 'An algorithm for my monitor problem'
+description: 'How I got dinner with my two friends who hate each other and some help carrying a monitor back to my dorm.'
+date: '2024-10-15'
+tags: ['algorithms', 'cs', 'personal']
+authors: ['sarah']
+draft: false
+---
+import PostImage from '@/components/PostImage.astro'
+import monitor from './monitor.png'
+
+## The monitor problem
+I ordered a new monitor for my dorm last week, and it arrived yesterday! But it's 16 inches large, and I'm quite lazy to retrieve it from the mail center - so this morning, I hatched a plan to get some help bringing it back to my dorm.
+
+### Sally and David
+I have two best friends, let's call them Sally and David. I love both of them, but they hate each other. Sally bullies David whenever she sees him, but they tolerate each other for my sake and we sometimes hang out as a trio.
+
+David and I have our Discrete Math class together today, and we usually get dinner together afterwards. Ideally, I would slip the question of coming to the mail center at dinner / on the way back to my dorm, and then David would be annoyed but agree to help carry it back. But I love Sally and miss hanging out with her, so I want to get dinner with her as well - more so than I want to hang out with David. But if I ask them both to dinner, I'm afraid to get into a situation where neither want to eat with me, and I have to carry the monitor back to the dorm myself.
+
+### An algorithmic solution
+
+```python
+def dinner_and_monitor():
+    dinner_with = ["David"]
+    david_is_helping = ask_david("can you help me pick up mail after discrete?")
+
+    if ask_sally("how about dinner?"):
+        if ask_sally("can david come too?"):
+            dinner_with.append("Sally")
+        else:
+            if david_is_helping:
+                if flip_coin():
+                    tell_sally("let's get dinner next time")
+                else: # after he's done helping with the monitor
+                    tell_david("let's get dinner next time") 
+                    dinner_with.append("Sally")
+                    dinner_with.remove("David")
+            else:
+                tell_david("let's get dinner next time")
+                dinner_with.append("Sally")
+                dinner_with.remove("David")
+
+    return dinner_with, david_is_helping
+```
+
+Note: The morning of, what I wrote out was much scrappier than what you see above—but the guts remain the same.
+
+The algorithm is as follows:
+
+First, I ask David if he can help me pick up my monitor from the mail center after our Discrete Math class.
+
+Then, I ask Sally if she's free for dinner in general. If. she says no, my decision is uncomplicated and I defer to getting dinner with David. 
+
+If she agrees, I ask if David can join us. If yes, then life is good. If no, then if David agreed to help me carry my mail, I would flip a coin to see who to get dinner with between the two of them. If David said no to helping, I would defer to getting dinner with only Sally.
+
+## Conclusion?
+Well, it ended up working in my favor.
+
+Sally said yes to dinner, and so did David. David said he was going to Discrete, and also agreed to helping bring my monitor back after class. So I asked if Sally was okay with David joining us, and she said sure.
+
+Kind of anticlimactic, but I'm happy. I got to eat dinner with my friends, and got help setting up my monitor. 😎
+
+<PostImage src={monitor} alt="My new monitor!" size="lg" quality="max" caption="My new monitor!" captionOverlay={true}/>

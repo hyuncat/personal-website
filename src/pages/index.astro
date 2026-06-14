@@ -1,0 +1,271 @@
+---
+import BlogCard from '@/components/BlogCard.astro'
+import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
+import Skills from '@/components/react/Skills'
+import { ErrorBoundary } from '@/components/react/ErrorBoundary'
+import { buttonVariants } from '@/components/ui/button'
+import Layout from '@/layouts/Layout.astro'
+import { Icon } from 'astro-icon/components'
+import { getRecentPosts } from '@/lib/data-utils'
+import { cn } from '@/lib/utils'
+import { SOCIAL_LINKS, ICON_MAP, SITE } from '@/consts'
+import type { SocialLink } from '@/types'
+
+// Error handling for fetching recent posts
+let latestPosts: Awaited<ReturnType<typeof getRecentPosts>> = []
+try {
+  latestPosts = await getRecentPosts(SITE.featuredPostCount)
+} catch (error) {
+  console.error('Error fetching recent posts:', error)
+}
+
+// Person Schema for homepage SEO
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": SITE.title,
+  "url": SITE.href,
+  "description": SITE.description
+}
+
+// Organization Schema
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": SITE.title,
+  "url": SITE.href,
+  "description": SITE.description
+}
+
+// Website Schema
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": SITE.title,
+  "url": SITE.href,
+  "description": SITE.description,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": `${SITE.href}/blog?q={search_term_string}`
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+
+---
+<Layout class="max-w-3xl" transition:persist="home-layout">
+  <PageHead slot="head" title={SITE.title} fullTitle={true} />
+  
+  <!-- Schema Markup for SEO -->
+  <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+  
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden rounded-xl" style="min-height: clamp(280px, 40vh, 400px);">
+    <!-- Gradient Background -->
+    <!-- <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" aria-hidden="true"></div> -->
+    
+    <!-- Content -->
+    <div class="relative z-10 p-8 md:p-12">
+      <div class="flex flex-col gap-8">
+        <!-- Main Content -->
+        <div class="flex-1 min-w-0 space-y-6">
+          <!-- Heading -->
+          <div class="space-y-0" style="min-height: clamp(120px, 20vh, 180px);">
+            <img
+              src="/static/fav_white.png"
+              alt="Sarah Hong logo"
+              class="size-24 dark:block hidden"
+              width="96"
+              height="96"
+              loading="eager"
+              fetchpriority="high"
+            />
+            <img
+              src="/static/fav_black.png"
+              alt="Sarah Hong logo"
+              class="size-24 dark:hidden block"
+              width="96"
+              height="96"
+              loading="eager"
+              fetchpriority="high"
+            />
+            <h1 class="text-1xl sm:text-3xl md:text-3xl leading-[1.1] font-bold tracking-tight" style="font-variation-settings: 'wght' 700;">
+              <br class="hidden sm:block" />
+              <span>Sarah Hong</span>
+            </h1>
+            <p class="text-muted-foreground mt-4 leading-relaxed text-base md:text-lg max-w-xl" style="min-height: 3rem;">
+              Hi, I'm Sarah! I recently graduated from Columbia University with a degree in CS and math.
+              Here, you can find my projects and assorted writings—spanning who I am and what I think about.
+            </p>
+          </div>
+          
+          <!-- CTA Buttons -->
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <Link href="/blog" class={buttonVariants({ variant: 'default', size: 'lg' })}>
+              Read the blog
+              <Icon name="lucide:arrow-right" class="size-4" />
+            </Link>
+            <Link href="/about" class={buttonVariants({ variant: 'outline', size: 'lg' })}>
+              About me
+            </Link>
+          </div>
+          
+          <!-- Social Icons -->
+          <div class="pt-2">
+            <ul class="flex flex-wrap items-center gap-2" role="list">
+              {SOCIAL_LINKS.map(({ href, label }: SocialLink) => (
+                <li>
+                  <Link
+                    href={href}
+                    aria-label={label}
+                    title={label}
+                    class={buttonVariants({ variant: 'outline', size: 'icon' }) + ' backdrop-blur-sm bg-background/80'}
+                    external={href.startsWith('http') || href.startsWith('mailto:')}
+                  >
+                    <Icon
+                      name={
+                        ICON_MAP[label as keyof typeof ICON_MAP] ||
+                        'lucide:message-circle-question'
+                      }
+                      class="size-4"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <!-- Disclaimer -->
+  <section class="mt-0 mb-0">
+    <div class="max-w-2xl mx-auto">
+      <div class="flex items-start gap-3 rounded-lg border border-border bg-muted/30 px-5 py-4">
+        <div class="flex-shrink-0 flex size-9 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20" aria-hidden="true">
+          <Icon name="lucide:octagon-x" class="size-4 text-primary" />
+        </div>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-foreground">Disclaimer</p>
+          <p class="text-sm text-muted-foreground leading-relaxed">
+            Code aside, I don't use AI to write any of my blog posts.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills & Technologies (Optional) -->
+  <!-- <section class="mt-12">
+    <div class="mb-6">
+      <h2 class="text-2xl font-semibold mb-2">Skills & Technologies</h2>
+      <p class="text-sm text-muted-foreground">
+        Technologies and tools I work with
+      </p>
+    </div>
+    <ErrorBoundary client:load transition:persist="skills-error-boundary">
+      <Skills client:load transition:persist="skills-section" />
+    </ErrorBoundary>
+  </section> -->
+
+  <!-- Latest from the blog -->
+  {latestPosts && latestPosts.length > 0 && (
+    <section class="mt-12">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold mb-2">Latest Posts</h2>
+          <p class="text-sm text-muted-foreground">Recent articles, poems, thoughts</p>
+        </div>
+        <Link 
+          href="/blog" 
+          class={buttonVariants({ variant: 'ghost' }) + ' hidden sm:flex items-center gap-1.5'}
+        >
+          View all
+          <Icon name="lucide:arrow-right" class="size-4" />
+        </Link>
+      </div>
+      
+      <div class="space-y-2">
+        {latestPosts.map((post) => (
+          <article>
+            <BlogCard entry={post} />
+          </article>
+        ))}
+      </div>
+      
+      <article class="mt-2 sm:hidden">
+        <Link
+          href="/blog"
+          aria-label="View all blog posts"
+          class="group block py-3 px-2 rounded-md border border-border/50 bg-muted/20 hover:bg-muted/40 hover:border-primary/30 transition-all duration-200"
+        >
+          <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center group-hover:bg-primary/20 dark:group-hover:bg-primary/30 transition-colors" aria-hidden="true">
+              <Icon name="lucide:library" class="size-5 text-primary" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                  View all posts
+                </span>
+                <Icon name="lucide:arrow-right" class="size-4 text-primary/70 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" aria-hidden="true" />
+              </div>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                Explore all articles and tutorials
+              </p>
+            </div>
+          </div>
+        </Link>
+      </article>
+    </section>
+  )}
+
+  <!-- CTA Section -->
+  <section class="mt-5 sm:mt-10">
+    <div class="max-w-2xl mx-auto">
+      <div class="mb-12 relative">
+        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="w-full border-t border-border"></div>
+        </div>
+        <div class="relative flex justify-center">
+          <div class="flex items-center gap-2.5 px-4 py-2 rounded-full bg-background border border-border shadow-sm">
+            <span class="relative flex h-1.5 w-1.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+            </span>
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Available</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center space-y-6">
+        <div class="space-y-2">
+          <h3 class="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-foreground leading-tight">
+            Let's connect
+          </h3>
+        </div>
+        <p class="text-md sm:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
+          Have questions or want to collaborate? Feel free to reach out!
+        </p>
+        <div class="pt-4">
+          {SOCIAL_LINKS.find(link => link.label === 'Email') && (
+            <Link 
+              href={SOCIAL_LINKS.find(link => link.label === 'Email')!.href} 
+              class="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-lg bg-foreground text-background text-base font-medium hover:bg-foreground/90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Icon name="lucide:mail" class="size-4" />
+              <span>Get in touch</span>
+              <Icon name="lucide:arrow-right" class="size-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

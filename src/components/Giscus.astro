@@ -1,0 +1,99 @@
+---
+import { GISCUS } from '@/consts'
+
+// giscus is configured once it has a repo + the two IDs from giscus.app.
+const configured = Boolean(GISCUS.repo && GISCUS.repoId && GISCUS.categoryId)
+---
+
+<section id="giscus-section" class="mt-12" aria-label="Comments section">
+  {
+    configured ? (
+      <div id="giscus-container" class="min-h-[200px]" />
+    ) : (
+      <p class="text-muted-foreground text-sm">
+        Comments are not configured yet :( Please check back later!
+      </p>
+    )
+  }
+</section>
+
+{
+  configured && (
+    <script is:inline define:vars={{ GISCUS }} data-astro-rerun>
+      ;(function () {
+        function currentTheme() {
+          return document.documentElement.getAttribute('data-theme') === 'dark'
+            ? 'dark'
+            : 'light'
+        }
+
+        // (Re)inject the giscus client into the container. Idempotent: bails if
+        // the iframe already exists or a load is in flight.
+        function loadGiscus() {
+          const container = document.getElementById('giscus-container')
+          if (
+            !container ||
+            container.querySelector('iframe.giscus-frame') ||
+            container.dataset.loading === 'true'
+          ) {
+            return
+          }
+          container.dataset.loading = 'true'
+
+          const script = document.createElement('script')
+          script.src = 'https://giscus.app/client.js'
+          script.async = true
+          script.crossOrigin = 'anonymous'
+          script.setAttribute('data-repo', GISCUS.repo)
+          script.setAttribute('data-repo-id', GISCUS.repoId)
+          script.setAttribute('data-category', GISCUS.category)
+          script.setAttribute('data-category-id', GISCUS.categoryId)
+          script.setAttribute('data-mapping', GISCUS.mapping || 'pathname')
+          script.setAttribute('data-strict', '1')
+          script.setAttribute('data-reactions-enabled', '1')
+          script.setAttribute('data-emit-metadata', '0')
+          script.setAttribute('data-input-position', 'top')
+          script.setAttribute('data-theme', currentTheme())
+          script.setAttribute('data-lang', 'en')
+          script.setAttribute('data-loading', 'lazy')
+          script.onload = () => {
+            container.dataset.loading = 'false'
+          }
+          container.appendChild(script)
+        }
+
+        // Push a theme change into the already-loaded giscus iframe.
+        function setGiscusTheme(theme) {
+          const iframe = document.querySelector('iframe.giscus-frame')
+          if (!iframe || !iframe.contentWindow) return
+          iframe.contentWindow.postMessage(
+            { giscus: { setConfig: { theme } } },
+            'https://giscus.app',
+          )
+        }
+
+        // Register cross-navigation handlers once.
+        if (!window.__giscusInit) {
+          window.__giscusInit = true
+
+          // Keep giscus in sync with the site's theme toggle.
+          new MutationObserver((mutations) => {
+            for (const m of mutations) {
+              if (m.attributeName === 'data-theme') {
+                setGiscusTheme(currentTheme())
+              }
+            }
+          }).observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme'],
+          })
+
+          // Re-inject after Astro view-transition navigations.
+          document.addEventListener('astro:page-load', loadGiscus)
+        }
+
+        loadGiscus()
+      })()
+    </script>
+  )
+}

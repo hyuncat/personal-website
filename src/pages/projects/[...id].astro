@@ -1,0 +1,97 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
+import { Badge } from '@/components/ui/badge'
+import Layout from '@/layouts/Layout.astro'
+import { getAllProjects } from '@/lib/data-utils'
+import { formatDate } from '@/lib/utils'
+import { Icon } from 'astro-icon/components'
+import { Image } from 'astro:assets'
+import { render } from 'astro:content'
+
+export async function getStaticPaths() {
+  const projects = await getAllProjects()
+  return projects.map((project) => ({
+    params: { id: project.id },
+    props: project,
+  }))
+}
+
+const project = Astro.props
+const { Content } = await render(project)
+---
+
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title={project.data.name} description={project.data.description} />
+  <Breadcrumbs
+    items={[
+      { href: '/projects', label: 'Projects', icon: 'lucide:folder-git-2' },
+      { label: project.data.name, icon: 'lucide:file-text' },
+    ]}
+  />
+
+  <section class="flex flex-col gap-y-6">
+    {
+      project.data.image && (
+        <Image
+          src={project.data.image}
+          alt={project.data.name}
+          width={1200}
+          height={630}
+          class="w-full rounded-xl object-cover"
+        />
+      )
+    }
+
+    <div class="flex flex-col gap-y-3 text-center">
+      <h1 class="text-3xl leading-tight font-medium sm:text-4xl">
+        {project.data.name}
+      </h1>
+      <p class="text-muted-foreground">{project.data.description}</p>
+
+      {
+        project.data.startDate && (
+          <p class="text-muted-foreground/70 flex items-center justify-center gap-x-1.5 text-xs">
+            <Icon name="lucide:calendar" class="size-3" />
+            <span>
+              {formatDate(project.data.startDate)}
+              {project.data.endDate
+                ? ` → ${formatDate(project.data.endDate)}`
+                : ' → Present'}
+            </span>
+          </p>
+        )
+      }
+
+      {
+        project.data.tags && project.data.tags.length > 0 && (
+          <div class="flex flex-wrap justify-center gap-2">
+            {project.data.tags.map((tag: string) => (
+              <Badge variant="muted">{tag}</Badge>
+            ))}
+          </div>
+        )
+      }
+
+      {
+        project.data.link && (
+          <div class="flex justify-center">
+            <Link
+              href={project.data.link}
+              external
+              class="text-foreground inline-flex items-center gap-x-1.5 text-sm underline underline-offset-4"
+            >
+              <Icon name="lucide:external-link" class="size-3.5" />
+              <span>Visit project</span>
+            </Link>
+          </div>
+        )
+      }
+    </div>
+
+    <article class="prose max-w-none">
+      <Content />
+    </article>
+  </section>
+</Layout>

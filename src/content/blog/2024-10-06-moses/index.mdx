@@ -1,0 +1,97 @@
+---
+title: 'The DNA origami problem: Self-assembling nanoblocks'
+description: 'Given a desired superlattice structure, how can you design its constituent blocks to self-assemble into it?'
+date: '2024-10-06'
+tags: ['research', 'algorithms', 'cs', 'math']
+authors: ['sarah']
+draft: false
+---
+import PostImage from '@/components/PostImage.astro'
+import img1 from './img1.jpeg'
+import img2 from './img2.jpeg'
+import img3 from './img3.jpeg'
+import img4 from './img4.jpg'
+import img5 from './img5.jpeg'
+import img6 from './img6.jpeg'
+import img7 from './img7.jpeg'
+import img8 from './img8.jpeg'
+
+## Ganglab - Fall 2024
+This past summer, I started working with the Gang Lab at Columbia University as a chemical engineering research assistant. I received a generous grant through both the CCE and WEP programs which allowed me to stay in New York over the summer. So, I began conducting research with Jason Kahn, a former post-doctoral fellow at the Gang Lab and now full-time staff scientist at Brookhaven.
+
+## My project: MOSES, the coloring algorithm
+Despite the Gang Lab being foremost a chemical engineering research lab, I joined as a programmer - with the task of rewriting Jason's 2000 line Jupyter notebook containing the previous iteration of a "DNA origami coloring algorithm."
+
+Given my CS background (and lack thereof of any materials science one), I'll introduce the problem in broad strokes.
+
+## The building blocks of DNA origami
+The term **DNA origami** refers to name for the basic building block of our system.
+
+<PostImage src={img1} alt="Voxel and bonds" width={280} quality="max" caption="The DNA origami object, consisting of a voxel and bonds in the cardinal xyz directions." captionOverlay={true}/>
+
+
+It is a structure consisting of a voxel and a set of bonds.
+
+### Voxel
+The "**voxel**" (which borrows its name from the computer graphics voxel) is a vessel that can store either a choice of particle inside, or no particle at all. It is like the 'vertex' in a graph.
+
+<PostImage src={img2} alt="The voxel, with and without cargo." size="sm" quality="max" caption="The voxel, with and without cargo." captionOverlay={true}/>
+{/* <img src="/assets/images/blog/2024-10-06-ganglab/IMG_9F101E597CCA-1.jpeg" alt="Real numbers" width="300"/> */}
+
+### Bonds
+It is attached to 6 **bonds** on the +/- x, y, z vertices* of the voxel, which connects the voxel to other voxels. 
+- Note*: The voxel is actually an abstraction for an octahedral DNA wireframe, which contains 6 distinct vertices for the bonds to stick out from. This is also why it is called DNA origami.
+
+Each bond has an associated color - and each color has its complementary color, which we denote with + / -. A voxel with a bond can only connect to another bond if they have colors of opposing complementarity...
+
+<PostImage src={img3} alt="Four voxels connected to each other by complementary bonds." width={280} quality="max" caption="Four voxels connected to each other by complementary bonds." captionOverlay={true}/>
+<PostImage src={img4} alt="The voxel, with and without cargo." size="md" quality="max" caption="Two voxels, one with a particle and the other without, connected by a green bond and and a complementary bond." captionOverlay={true}/>
+
+These are like colored 'edges' in a graph coloring problem, where a color must connect to its complementary color.
+
+Bonds connect to each other with the following **binding rules**:
+1. A bond can only connect to another bond with its opposing complementarity
+2. No palindromes: A color and its complement cannot exist on the same voxel
+
+### Structures: Lattices
+The structures we ultimately build with these origami building blocks, are these superlattice particle structures. In 3D space, the origami come together almost like a Minecraft build.
+
+<PostImage src={img5} alt="A lattice that self-assembles from a set of constituent voxels." size="sm" quality="max" caption="A lattice that self-assembles from a set of constituent voxels." captionOverlay={true}/>
+
+It being a superlattice structure means that essentially, we have a minimum unique design which is copy-pasted infinitely around itself.
+
+## The problem: Bond coloring
+To simplify things for a bit, let's step back to a 2D picture of what's going on.
+Say we want to create the following 2D pattern which will tile out to infinity.
+
+<PostImage src={img6} alt="A desired lattice design that tiles out into infinity." size="sm" quality="max" caption="A desired lattice design that tiles out into infinity." captionOverlay={true}/>
+
+We know we want the particles to form this checkerboard structure. The question is, how do we design the colors of each bond, so that when we stick these origami into a machine and shake them around, that the complementary bonds come together and enable the origami **self-assemble** into our desired tiling lattice structure? 
+
+### Naive solution
+We could assume a naive solution is to paint each bond in the minimal design a different color. This ensures there's no mistakes and each particle will end up where it needs to go.
+
+<PostImage src={img7} alt="The naive solution has 4 colors and their 4 complements total—four unique origami objects." width={250} quality="max" caption="The naive solution has 4 colors and their 4 complements total—four unique origami objects." captionOverlay={true}/>
+{/* <img src="/assets/images/blog/2024-10-06-ganglab/IMG_FF5686948ED4-1.jpeg" alt="Real numbers" width="300"/> */}
+
+However, the more colors it takes to create a certain design, the less likely it is to form. Hence, we have the **criteria**:
+- less colors = better
+- more colors = worse
+which forms the main motivation and constraint for our algorithm. 
+
+Keeping in mind the *binding rules*, how can we start to simplify the number of colors needed to ensure this design will still form as it should?
+
+### Minimal solution
+It turns out, for this system we only need one color (+ its complement!)
+
+<PostImage src={img8} alt="A minimum solution needs only one color and two unique origami objects." width={250} quality="max" caption="A minimum solution needs only one color and two unique origami objects." captionOverlay={true}/>
+{/* <img src="/assets/images/blog/2024-10-06-ganglab/IMG_8B2DA1395FDB-1.jpeg" alt="Real numbers" width="300"/> */}
+
+For simple designs like this, we can often reason out a minimal number of colors by hand. However, as we want to create more complicated 3D designs, it becomes much harder to do the computations by hand. Hence, our lab over time, slowly developed this algorithm which does it computationally.
+
+Over the summer, I rewrote the entire codebase and created a GUI to visualize the voxels + bonds in the lattice structures.
+
+## Looking ahead: Fall 2024
+There is still some work that needs to be done with debugging the coloring portion - we are looking to publish the algorithm as a paper soon, so making sure everything works as expected is of the top priority.
+
+Next steps, we want to extend the codebase to algorithmically compute the ideal binding order (binding temperature) for each bond in the lattice.

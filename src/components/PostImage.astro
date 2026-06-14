@@ -1,0 +1,199 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+
+type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full'
+type Align = 'left' | 'center' | 'right'
+type Hover = 'none' | 'zoom' | 'lift' | 'tilt' | 'glow' | 'fade'
+
+interface Props {
+  /** Imported image (recommended) or string URL for remote images. */
+  src: ImageMetadata | string
+  /** Optional dark-mode variant. When set, swaps via CSS based on theme. */
+  darkSrc?: ImageMetadata | string
+  /** Always provide — used for alt text and accessibility. */
+  alt: string
+  /** Display size preset, mapped to Tailwind max-width. Used when neither `width` nor `height` is set. Default: 'lg'. */
+  size?: Size
+  /** Displayed width in px. Overrides `size`. Takes precedence over `height` when both are set. */
+  width?: number
+  /** Displayed height in px (width auto-scales to preserve aspect ratio). Overrides `size`. Ignored when `width` is also set. */
+  height?: number
+  /** Pixel width of the optimized image file Astro generates — controls sharpness/file size, NOT displayed size. Higher is crisper on retina but heavier. Default: 1200. */
+  resolution?: number
+  /** Compression quality. Higher = sharper but larger files. Number 0-100 or a preset. Default: 'high'. */
+  quality?: number | 'low' | 'mid' | 'high' | 'max'
+  /** Output format. Defaults to Astro's choice (usually webp). Use 'png' for lossless. */
+  format?: 'avif' | 'webp' | 'png' | 'jpeg' | 'jpg'
+  /** Horizontal alignment within the post column. Default: 'center'. */
+  align?: Align
+  /** Hover animation preset. Use `class` for fully custom effects. Default: 'none'. */
+  hover?: Hover
+  /** Rounded corners on the image. Default: true. */
+  rounded?: boolean
+  /** Extra classes applied to the figure wrapper. */
+  class?: string
+  /** Extra classes applied directly to the <img> element. */
+  imageClass?: string
+  /** Plain-text caption. For rich/markdown captions, use the default slot instead. */
+  caption?: string
+  /** Show the caption as white text over a darkened wash on the image, revealed on hover, instead of below it. Default: false. */
+  captionOverlay?: boolean
+}
+
+const {
+  src,
+  darkSrc,
+  alt,
+  size = 'lg',
+  width,
+  height,
+  resolution = 1200,
+  quality = 'high',
+  format,
+  align = 'center',
+  hover = 'none',
+  rounded = true,
+  class: className,
+  imageClass,
+  caption,
+  captionOverlay = false,
+} = Astro.props
+
+const sizeClasses: Record<Size, string> = {
+  xs: 'max-w-xs',     // 320px
+  sm: 'max-w-sm',     // 384px
+  md: 'max-w-md',     // 448px
+  lg: 'max-w-lg',     // 512px
+  xl: 'max-w-xl',     // 576px
+  '2xl': 'max-w-2xl', // 672px
+  full: 'max-w-full',
+}
+
+const alignClasses: Record<Align, string> = {
+  left: 'mr-auto',
+  center: 'mx-auto',
+  right: 'ml-auto',
+}
+
+const hoverClasses: Record<Hover, string> = {
+  none: '',
+  zoom: 'transition-transform duration-300 ease-out hover:scale-[1.03]',
+  lift: 'transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg',
+  tilt: 'transition-transform duration-300 ease-out hover:rotate-1',
+  glow: 'transition-shadow duration-300 ease-out hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(255,255,255,0.2)]',
+  fade: 'transition-opacity duration-300 ease-out opacity-90 hover:opacity-100',
+}
+
+// Sizing precedence: explicit `width` wins, then `height`, otherwise the `size` preset.
+const useWidth = width != null
+const useHeight = !useWidth && height != null
+const useSizePreset = !useWidth && !useHeight
+
+const hasCaption = caption || Astro.slots.has('default')
+const showCaptionOverlay = Boolean(captionOverlay && hasCaption)
+
+const wrapperClass = [
+  'my-6',
+  useSizePreset && sizeClasses[size],
+  useHeight && 'w-fit',
+  // `group relative` lets the absolutely-positioned overlay cover the image and react to hover.
+  showCaptionOverlay && 'group relative',
+  alignClasses[align],
+  className,
+]
+  .filter(Boolean)
+  .join(' ')
+
+const wrapperStyle = useWidth ? `max-width: ${width}px` : undefined
+
+const baseImageClass = [
+  useHeight ? 'w-auto max-w-full' : 'w-full h-auto',
+  rounded && 'rounded-lg',
+  hoverClasses[hover],
+  imageClass,
+]
+  .filter(Boolean)
+  .join(' ')
+
+const imageStyle = useHeight ? `height: ${height}px` : undefined
+
+// Local images (ImageMetadata) run through Astro's optimizer. Remote URLs (string)
+// have no known dimensions at build time, so they fall back to a plain <img>.
+const isRemote = (image: ImageMetadata | string): image is string =>
+  typeof image === 'string'
+
+const lightImageClass = darkSrc
+  ? `${baseImageClass} dark:hidden block`
+  : baseImageClass
+const darkImageClass = `${baseImageClass} hidden dark:block`
+
+const overlayCaptionClass = [
+  'absolute inset-0 flex items-center justify-center p-4',
+  'bg-black/50 text-center text-sm font-medium text-white',
+  'opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100',
+  rounded && 'rounded-lg',
+]
+  .filter(Boolean)
+  .join(' ')
+---
+
+<figure class={wrapperClass} style={wrapperStyle}>
+  {
+    isRemote(src) ? (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        style={imageStyle}
+        class={lightImageClass}
+      />
+    ) : (
+      <Image
+        src={src}
+        alt={alt}
+        width={resolution}
+        quality={quality}
+        format={format}
+        style={imageStyle}
+        class={lightImageClass}
+      />
+    )
+  }
+  {
+    darkSrc &&
+      (isRemote(darkSrc) ? (
+        <img
+          src={darkSrc}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          style={imageStyle}
+          class={darkImageClass}
+        />
+      ) : (
+        <Image
+          src={darkSrc}
+          alt={alt}
+          width={resolution}
+          quality={quality}
+          format={format}
+          style={imageStyle}
+          class={darkImageClass}
+        />
+      ))
+  }
+  {
+    hasCaption &&
+      (showCaptionOverlay ? (
+        <figcaption class={overlayCaptionClass}>
+          <slot>{caption}</slot>
+        </figcaption>
+      ) : (
+        <figcaption class="text-muted-foreground mt-2 text-center text-sm italic">
+          <slot>{caption}</slot>
+        </figcaption>
+      ))
+  }
+</figure>
