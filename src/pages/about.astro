@@ -1,12 +1,9 @@
 ---
 import Breadcrumbs from '@/components/Breadcrumbs.astro'
 import PageHead from '@/components/PageHead.astro'
-import Link from '@/components/Link.astro'
 import Layout from '@/layouts/Layout.astro'
 import { Icon } from 'astro-icon/components'
 import { SITE } from '@/consts'
-import { Image } from 'astro:assets'
-import portrait from '@/assets/portrait.jpg'
 
 
 // Experience Timeline - Customize with your own experience
@@ -34,14 +31,14 @@ const experience: ExperienceItem[] = [
     company: 'Columbia Robotics Club',
     period: '2024 - 2026',
     icon: 'lucide:briefcase',
-    key: 'Led one of largest engineering student organizations at Columbia, with 200+ members. Organized MakeCU 2025, YC@Columbia 2025.'
+    key: 'Led one of largest engineering student organizations at Columbia, with 200+ members. Organized <a href="https://makecu25.devpost.com/" class="text-primary hover:text-primary/80">MakeCU 2025</a> and <a href="https://events.ycombinator.com/yc-columbia" class="text-primary hover:text-primary/80">YC@Columbia 2025</a>.'
   },
   {
     role: 'Computational Research Assistant',
     company: 'Columbia Gang Lab',
     period: '2024 - 2026',
     icon: 'lucide:code',
-    key: 'Implemented MOSES, a fundamental algorithm for DNA origami self-assembly. Co-author of paper published in ACS Nano and featured on the front cover.'
+    key: 'Implemented MOSES, a fundamental algorithm for DNA origami self-assembly. Co-author of <a href="https://pubs.acs.org/doi/10.1021/acsnano.4c17408" class="text-primary hover:text-primary/80">paper</a> published in ACS Nano and featured on the <a href="https://pubs.acs.org/toc/ancac3/19/15" class="text-primary hover:text-primary/80">front cover</a>.'
   },
 ]
 
@@ -129,9 +126,7 @@ const personSchema = {
                   {exp.company} · {exp.period}
                 </p>
               </div>
-              <p class="text-sm text-muted-foreground/90 leading-relaxed mt-2">
-                {exp.key}
-              </p>
+              <p class="text-sm text-muted-foreground/90 leading-relaxed mt-2" set:html={exp.key} />
             </div>
           </div>
         </div>

@@ -39,18 +39,14 @@ const pathname = Astro.url.pathname
         <span id="pill-indicator" class="absolute top-1 left-0 h-[calc(100%-0.5rem)] rounded-full bg-background shadow-sm transition-[transform,width] duration-300 ease-in-out pointer-events-none opacity-0" aria-hidden="true"></span>
         {NAV_LINKS.map((item) => {
           const isExternal = isExternalLink(item.href)
-          const isHome = item.href === '/'
           return (
             <Link
               href={item.href}
               data-nav-href={item.href}
-              aria-label={isHome ? 'Home' : undefined}
-              class="nav-pill relative z-10 capitalize px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5 text-foreground/60 hover:text-foreground"
+              aria-label={item.label}
+              class="nav-pill group relative z-10 px-3 py-1.5 rounded-full transition-colors flex items-center justify-center text-foreground/60 hover:text-foreground"
             >
-              {isHome
-                ? <Icon name="lucide:home" class="size-4" aria-hidden="true" />
-                : <span>{item.label}</span>
-              }
+              {item.icon && <Icon name={item.icon} class="size-4" aria-hidden="true" />}
               {isExternal && (
                 <Icon
                   name="lucide:external-link"
@@ -58,6 +54,9 @@ const pathname = Astro.url.pathname
                   aria-hidden="true"
                 />
               )}
+              <span class="pointer-events-none absolute top-full mt-1.5 left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-xs text-foreground/70 bg-background/90 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
+                {item.label}
+              </span>
             </Link>
           )
         })}

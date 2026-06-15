@@ -68,7 +68,7 @@ const websiteSchema = {
   <img
     src="/intro2.png"
     alt="Intro header"
-    class="w-full max-w-xl mx-auto h-auto rounded-xl block"
+    class="w-full max-w-xl mx-auto h-auto rounded-xl block transition-transform duration-200 hover:scale-102"
     loading="eager"
     fetchpriority="high"
   />
@@ -101,6 +101,7 @@ const websiteSchema = {
               <Icon name="lucide:arrow-right" class="size-4" />
             </Link>
             <Link href="/about" class={buttonVariants({ variant: 'outline', size: 'lg' })}>
+              <Icon name="lucide:user" class="size-4" />
               About me
             </Link>
             {SOCIAL_LINKS.find(link => link.label === 'Email') && (

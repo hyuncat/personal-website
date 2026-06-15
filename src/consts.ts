@@ -45,18 +45,22 @@ export const NAV_LINKS: SocialLink[] = [
   {
     href: '/',
     label: 'Home',
+    icon: 'lucide:home',
   },
   {
     href: '/blog',
     label: 'Blog',
+    icon: 'lucide:library-big',
   },
   {
     href: '/projects',
     label: 'Projects',
+    icon: 'lucide:folder-git-2',
   },
   {
     href: '/about',
     label: 'About',
+    icon: 'lucide:user',
   },
 ]
 
