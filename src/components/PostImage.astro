@@ -11,8 +11,8 @@ interface Props {
   src: ImageMetadata | string
   /** Optional dark-mode variant. When set, swaps via CSS based on theme. */
   darkSrc?: ImageMetadata | string
-  /** Always provide — used for alt text and accessibility. */
-  alt: string
+  /** Alt text. Defaults to caption if omitted, then 'photo'. */
+  alt?: string
   /** Display size preset, mapped to Tailwind max-width. Used when neither `width` nor `height` is set. Default: 'lg'. */
   size?: Size
   /** Displayed width in px. Overrides `size`. Takes precedence over `height` when both are set. */
@@ -44,7 +44,7 @@ interface Props {
 const {
   src,
   darkSrc,
-  alt,
+  alt: altProp,
   size = 'lg',
   width,
   height,
@@ -59,6 +59,8 @@ const {
   caption,
   captionOverlay = false,
 } = Astro.props
+
+const alt = altProp ?? caption ?? 'photo'
 
 const sizeClasses: Record<Size, string> = {
   xs: 'max-w-xs',     // 320px
@@ -122,6 +124,13 @@ const imageStyle = useHeight ? `height: ${height}px` : undefined
 // have no known dimensions at build time, so they fall back to a plain <img>.
 const isRemote = (image: ImageMetadata | string): image is string =>
   typeof image === 'string'
+
+function parseLinks(text: string): string {
+  return text.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" class="underline hover:no-underline" target="_blank" rel="noopener noreferrer">$1</a>',
+  )
+}
 
 const lightImageClass = darkSrc
   ? `${baseImageClass} dark:hidden block`
@@ -187,13 +196,17 @@ const overlayCaptionClass = [
   {
     hasCaption &&
       (showCaptionOverlay ? (
-        <figcaption class={overlayCaptionClass}>
-          <slot>{caption}</slot>
-        </figcaption>
+        Astro.slots.has('default') ? (
+          <figcaption class={overlayCaptionClass}><slot /></figcaption>
+        ) : (
+          <figcaption class={overlayCaptionClass} set:html={parseLinks(caption!)} />
+        )
       ) : (
-        <figcaption class="text-muted-foreground mt-2 text-center text-sm italic">
-          <slot>{caption}</slot>
-        </figcaption>
+        Astro.slots.has('default') ? (
+          <figcaption class="text-muted-foreground mt-2 text-center text-sm italic"><slot /></figcaption>
+        ) : (
+          <figcaption class="text-muted-foreground mt-2 text-center text-sm italic" set:html={parseLinks(caption!)} />
+        )
       ))
   }
 </figure>

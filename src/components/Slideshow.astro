@@ -1,0 +1,361 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+
+type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full'
+type Align = 'left' | 'center' | 'right'
+type Hover = 'none' | 'zoom' | 'lift' | 'tilt' | 'glow' | 'fade'
+
+export interface SlideImage {
+  /** Imported image (recommended) or string URL for remote images. */
+  src: ImageMetadata | string
+  /** Optional dark-mode variant. Swaps via CSS based on theme. */
+  darkSrc?: ImageMetadata | string
+  /** Alt text. Defaults to caption if omitted, then 'photo'. */
+  alt?: string
+  /** Per-slide caption. Shown below image, or overlaid on hover when captionOverlay is true. */
+  caption?: string
+}
+
+interface Props {
+  images: SlideImage[]
+  /** Display size preset, mapped to Tailwind max-width. Default: 'lg'. */
+  size?: Size
+  /** Displayed width in px. Overrides `size`. */
+  width?: number
+  /** Fixed display height in px. All images crop to this height. Overrides aspect-ratio derived from first image. */
+  height?: number
+  /** Pixel width of the optimized image file. Default: 1200. */
+  resolution?: number
+  /** Compression quality. Default: 'high'. */
+  quality?: number | 'low' | 'mid' | 'high' | 'max'
+  /** Output format. Defaults to Astro's choice (usually webp). */
+  format?: 'avif' | 'webp' | 'png' | 'jpeg' | 'jpg'
+  /** Horizontal alignment within the post column. Default: 'center'. */
+  align?: Align
+  /** Hover animation preset applied to each image. Default: 'none'. */
+  hover?: Hover
+  /** Rounded corners on the image container. Default: true. */
+  rounded?: boolean
+  /** Show captions as white text overlaid on a darkened image on hover. Default: false. */
+  captionOverlay?: boolean
+  /** Show left/right arrow buttons. Default: true. */
+  showArrows?: boolean
+  /** Show dot navigation indicators. Default: true. */
+  showDots?: boolean
+  /** Extra classes applied to the figure wrapper. */
+  class?: string
+  /** Extra classes applied to each image element. */
+  imageClass?: string
+}
+
+const {
+  images,
+  size = 'lg',
+  width,
+  height,
+  resolution = 1200,
+  quality = 'high',
+  format,
+  align = 'center',
+  hover = 'none',
+  rounded = true,
+  captionOverlay = false,
+  showArrows = true,
+  showDots = true,
+  class: className,
+  imageClass,
+} = Astro.props
+
+const sizeClasses: Record<Size, string> = {
+  xs: 'max-w-xs',
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  full: 'max-w-full',
+}
+
+const alignClasses: Record<Align, string> = {
+  left: 'mr-auto',
+  center: 'mx-auto',
+  right: 'ml-auto',
+}
+
+const hoverClasses: Record<Hover, string> = {
+  none: '',
+  zoom: 'transition-transform duration-300 ease-out hover:scale-[1.03]',
+  lift: 'transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg',
+  tilt: 'transition-transform duration-300 ease-out hover:rotate-1',
+  glow: 'transition-shadow duration-300 ease-out hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_0_30px_-5px_rgba(255,255,255,0.2)]',
+  fade: 'transition-opacity duration-300 ease-out opacity-90 hover:opacity-100',
+}
+
+const useWidth = width != null
+const useSizePreset = !useWidth
+
+const wrapperClass = [
+  'my-6',
+  useSizePreset && sizeClasses[size],
+  alignClasses[align],
+  className,
+]
+  .filter(Boolean)
+  .join(' ')
+
+const wrapperStyle = useWidth ? `max-width: ${width}px` : undefined
+
+const isRemote = (image: ImageMetadata | string): image is string =>
+  typeof image === 'string'
+
+// Derive aspect ratio from first local image so all slides crop to the same box.
+// Falls back to a fixed height if provided, or natural sizing for remote first images.
+const firstSrc = images[0]?.src
+const firstIsLocal = firstSrc != null && !isRemote(firstSrc)
+const firstMeta = firstIsLocal ? (firstSrc as ImageMetadata) : null
+
+let containerStyle: string | undefined
+if (height != null) {
+  containerStyle = `height: ${height}px`
+} else if (firstMeta) {
+  containerStyle = `aspect-ratio: ${firstMeta.width} / ${firstMeta.height}`
+}
+
+// When we have a fixed container box, slides are absolutely stacked so the
+// container never collapses. Without known dimensions, slides flow naturally.
+const useAbsoluteSlides = containerStyle != null
+
+const baseImageClass = [
+  useAbsoluteSlides ? 'w-full h-full object-cover' : 'w-full h-auto',
+  hoverClasses[hover],
+  imageClass,
+]
+  .filter(Boolean)
+  .join(' ')
+
+const containerClass = [
+  'group relative overflow-hidden',
+  rounded && 'rounded-lg',
+]
+  .filter(Boolean)
+  .join(' ')
+
+const overlayCaptionClass = [
+  'absolute inset-0 flex items-center justify-center p-4',
+  'bg-black/50 text-center text-sm font-medium text-white',
+  'opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100',
+].join(' ')
+
+const hasMultiple = images.length > 1
+const hasBelowCaptions = !captionOverlay && images.some((img) => img.caption)
+
+// Convert [text](url) markdown links to <a> tags for use with set:html.
+function parseLinks(text: string): string {
+  return text.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" class="underline hover:no-underline" target="_blank" rel="noopener noreferrer">$1</a>',
+  )
+}
+---
+
+<figure class={wrapperClass} style={wrapperStyle} data-slideshow>
+  <!-- Image container: arrows are positioned relative to this -->
+  <div class={containerClass} style={containerStyle}>
+    {
+      images.map(({ src, darkSrc, alt: altProp, caption }, i) => {
+        const alt = altProp ?? caption ?? 'photo'
+        const lightClass = darkSrc
+          ? `${baseImageClass} dark:hidden block`
+          : baseImageClass
+        const darkClass = `${baseImageClass} hidden dark:block`
+
+        const slideClass = [
+          useAbsoluteSlides ? 'absolute inset-0' : '',
+          i === 0 ? '' : 'hidden',
+        ]
+          .filter(Boolean)
+          .join(' ') || undefined
+
+        return (
+          <div class={slideClass} data-slide={i}>
+            <div
+              class={[
+                'group relative',
+                useAbsoluteSlides ? 'h-full w-full' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {isRemote(src) ? (
+                <img
+                  src={src}
+                  alt={alt}
+                  loading="lazy"
+                  decoding="async"
+                  class={lightClass}
+                />
+              ) : (
+                <Image
+                  src={src}
+                  alt={alt}
+                  width={resolution}
+                  quality={quality}
+                  format={format}
+                  class={lightClass}
+                />
+              )}
+              {darkSrc &&
+                (isRemote(darkSrc) ? (
+                  <img
+                    src={darkSrc}
+                    alt={alt}
+                    loading="lazy"
+                    decoding="async"
+                    class={darkClass}
+                  />
+                ) : (
+                  <Image
+                    src={darkSrc}
+                    alt={alt}
+                    width={resolution}
+                    quality={quality}
+                    format={format}
+                    class={darkClass}
+                  />
+                ))}
+              {captionOverlay && caption && (
+                <div class={overlayCaptionClass} set:html={parseLinks(caption)} />
+              )}
+            </div>
+          </div>
+        )
+      })
+    }
+
+    {
+      hasMultiple && showArrows && (
+        <>
+          <button
+            class="slideshow-prev group/btn absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/65 select-none"
+            aria-label="Previous image"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="transition-transform duration-200 ease-out group-hover/btn:scale-125"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <button
+            class="slideshow-next group/btn absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/65 select-none"
+            aria-label="Next image"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="transition-transform duration-200 ease-out group-hover/btn:scale-125"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </>
+      )
+    }
+  </div>
+
+  <!-- Per-slide captions below the image (when not using overlay mode) -->
+  {
+    hasBelowCaptions &&
+      images.map(({ caption }, i) =>
+        caption ? (
+          <figcaption
+            class={`text-muted-foreground mt-2 text-center text-sm italic ${i === 0 ? '' : 'hidden'}`}
+            data-caption={i}
+            set:html={parseLinks(caption)}
+          />
+        ) : null,
+      )
+  }
+
+  <!-- Dot indicators -->
+  {
+    hasMultiple && showDots && (
+      <div class="mt-3 flex justify-center gap-1.5">
+        {images.map((_, i) => (
+          <button
+            class={`h-2 w-2 cursor-pointer rounded-full transition-colors ${i === 0 ? 'bg-foreground' : 'bg-muted-foreground/35'}`}
+            data-dot={i}
+            aria-label={`Go to image ${i + 1}`}
+          />
+        ))}
+      </div>
+    )
+  }
+</figure>
+
+<script>
+  function initSlideshow(root: Element) {
+    const slides = root.querySelectorAll<HTMLElement>('[data-slide]')
+    const dots = root.querySelectorAll<HTMLElement>('[data-dot]')
+    const prev = root.querySelector<HTMLElement>('.slideshow-prev')
+    const next = root.querySelector<HTMLElement>('.slideshow-next')
+
+    if (slides.length <= 1) return
+
+    let current = 0
+
+    function caption(i: number) {
+      return root.querySelector<HTMLElement>(`[data-caption="${i}"]`)
+    }
+
+    function goTo(index: number) {
+      const n = slides.length
+      const target = ((index % n) + n) % n
+
+      slides[current].classList.add('hidden')
+      caption(current)?.classList.add('hidden')
+      dots[current]?.classList.replace('bg-foreground', 'bg-muted-foreground/35')
+
+      current = target
+
+      slides[current].classList.remove('hidden')
+      caption(current)?.classList.remove('hidden')
+      dots[current]?.classList.replace('bg-muted-foreground/35', 'bg-foreground')
+    }
+
+    prev?.addEventListener('click', () => goTo(current - 1))
+    next?.addEventListener('click', () => goTo(current + 1))
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () =>
+        goTo(parseInt(dot.dataset.dot ?? '0')),
+      )
+    })
+  }
+
+  function initAll() {
+    document.querySelectorAll('[data-slideshow]').forEach((el) => {
+      if (!el.dataset.slideshowReady) {
+        el.dataset.slideshowReady = '1'
+        initSlideshow(el)
+      }
+    })
+  }
+
+  initAll()
+  document.addEventListener('astro:page-load', initAll)
+</script>
