@@ -349,9 +349,10 @@ function parseLinks(text: string): string {
 
   function initAll() {
     document.querySelectorAll('[data-slideshow]').forEach((el) => {
-      if (!el.dataset.slideshowReady) {
-        el.dataset.slideshowReady = '1'
-        initSlideshow(el)
+      const htmlEl = el as HTMLElement
+      if (!htmlEl.dataset.slideshowReady) {
+        htmlEl.dataset.slideshowReady = '1'
+        initSlideshow(htmlEl)
       }
     })
   }
