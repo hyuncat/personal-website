@@ -110,6 +110,7 @@ const wrapperClass = [
 const wrapperStyle = useWidth ? `max-width: ${width}px` : undefined
 
 const baseImageClass = [
+  'block my-0',
   useHeight ? 'w-auto max-w-full' : 'w-full h-auto',
   rounded && 'rounded-lg',
   hoverClasses[hover],
@@ -137,11 +138,22 @@ const lightImageClass = darkSrc
   : baseImageClass
 const darkImageClass = `${baseImageClass} hidden dark:block`
 
+// Overlay only ever shows on desktop (sm+) on hover. On mobile the caption is
+// rendered below the image instead (belowCaptionClass), never overlaid.
 const overlayCaptionClass = [
-  'absolute inset-0 flex items-center justify-center p-4',
+  'absolute inset-0 hidden sm:flex items-center justify-center p-4',
   'bg-black/50 text-center text-sm font-medium text-white',
   'opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100',
   rounded && 'rounded-lg',
+]
+  .filter(Boolean)
+  .join(' ')
+
+// In overlay mode the below caption is mobile-only (hidden on sm+ where the
+// overlay takes over); otherwise it's the normal always-visible caption.
+const belowCaptionClass = [
+  'text-muted-foreground mt-2 text-center text-sm italic',
+  showCaptionOverlay && 'sm:hidden',
 ]
   .filter(Boolean)
   .join(' ')
@@ -194,19 +206,19 @@ const overlayCaptionClass = [
       ))
   }
   {
-    hasCaption &&
-      (showCaptionOverlay ? (
-        Astro.slots.has('default') ? (
-          <figcaption class={overlayCaptionClass}><slot /></figcaption>
-        ) : (
-          <figcaption class={overlayCaptionClass} set:html={parseLinks(caption!)} />
-        )
+    hasCaption && showCaptionOverlay &&
+      (Astro.slots.has('default') ? (
+        <figcaption class={overlayCaptionClass}><slot /></figcaption>
       ) : (
-        Astro.slots.has('default') ? (
-          <figcaption class="text-muted-foreground mt-2 text-center text-sm italic"><slot /></figcaption>
-        ) : (
-          <figcaption class="text-muted-foreground mt-2 text-center text-sm italic" set:html={parseLinks(caption!)} />
-        )
+        <figcaption class={overlayCaptionClass} set:html={parseLinks(caption!)} />
+      ))
+  }
+  {
+    hasCaption &&
+      (Astro.slots.has('default') ? (
+        <figcaption class={belowCaptionClass}><slot /></figcaption>
+      ) : (
+        <figcaption class={belowCaptionClass} set:html={parseLinks(caption!)} />
       ))
   }
 </figure>

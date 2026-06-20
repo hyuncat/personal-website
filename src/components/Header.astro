@@ -15,7 +15,7 @@ const pathname = Astro.url.pathname
 
 <header class="bg-background/50 sticky top-0 z-10 backdrop-blur-md" transition:persist>
   <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4 py-1 px-4">
-    <Link href="/" class="flex shrink-0 items-center gap-2 text-xl font-medium self-stretch" data-astro-reload>
+    <a href="/" class="flex shrink-0 items-center gap-2 text-xl font-medium self-stretch" data-astro-reload>
       <img
         src="/static/cat_white.png"
         alt="Logo"
@@ -33,7 +33,7 @@ const pathname = Astro.url.pathname
         transition:persist="logo-light"
       />
      <!-- <span class="hidden min-[400px]:block">{SITE.title}</span> -->
-    </Link>
+    </a>
     <div class="flex items-center gap-2 md:gap-4">
       <nav id="pill-nav" class="hidden md:flex items-center bg-muted/25 dark:bg-muted/75 rounded-full p-1 text-sm gap-0 relative">
         <span id="pill-indicator" class="absolute top-1 left-0 h-[calc(100%-0.5rem)] rounded-full bg-background shadow-sm transition-[transform,width] duration-300 ease-in-out pointer-events-none opacity-0" aria-hidden="true"></span>

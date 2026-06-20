@@ -141,14 +141,18 @@ const containerClass = [
   .filter(Boolean)
   .join(' ')
 
+// Overlay only ever shows on desktop (sm+) on hover. On mobile the caption is
+// rendered below the image instead (see hasBelowCaptions), never overlaid.
 const overlayCaptionClass = [
-  'absolute inset-0 flex items-center justify-center p-4',
+  'absolute inset-0 hidden sm:flex items-center justify-center p-4',
   'bg-black/50 text-center text-sm font-medium text-white',
   'opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100',
 ].join(' ')
 
 const hasMultiple = images.length > 1
-const hasBelowCaptions = !captionOverlay && images.some((img) => img.caption)
+// Always render below-captions when any exist. In overlay mode they're hidden on
+// sm+ (the overlay takes over there) and only shown on mobile.
+const hasBelowCaptions = images.some((img) => img.caption)
 
 // Convert [text](url) markdown links to <a> tags for use with set:html.
 function parseLinks(text: string): string {
@@ -161,7 +165,7 @@ function parseLinks(text: string): string {
 
 <figure class={wrapperClass} style={wrapperStyle} data-slideshow>
   <!-- Image container: arrows are positioned relative to this -->
-  <div class={containerClass} style={containerStyle}>
+  <div class={containerClass} style={containerStyle} data-slideshow-container>
     {
       images.map(({ src, darkSrc, alt: altProp, caption }, i) => {
         const alt = altProp ?? caption ?? 'photo'
@@ -237,7 +241,7 @@ function parseLinks(text: string): string {
       hasMultiple && showArrows && (
         <>
           <button
-            class="slideshow-prev group/btn absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/65 select-none"
+            class="slideshow-prev group/btn absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-100 sm:opacity-0 transition sm:group-hover:opacity-100 hover:bg-black/65 select-none"
             aria-label="Previous image"
           >
             <svg
@@ -255,7 +259,7 @@ function parseLinks(text: string): string {
             </svg>
           </button>
           <button
-            class="slideshow-next group/btn absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/65 select-none"
+            class="slideshow-next group/btn absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-100 sm:opacity-0 transition sm:group-hover:opacity-100 hover:bg-black/65 select-none"
             aria-label="Next image"
           >
             <svg
@@ -283,7 +287,7 @@ function parseLinks(text: string): string {
       images.map(({ caption }, i) =>
         caption ? (
           <figcaption
-            class={`text-muted-foreground mt-2 text-center text-sm italic ${i === 0 ? '' : 'hidden'}`}
+            class={`text-muted-foreground mt-2 text-center text-sm italic ${captionOverlay ? 'sm:hidden ' : ''}${i === 0 ? '' : 'hidden'}`}
             data-caption={i}
             set:html={parseLinks(caption)}
           />
@@ -339,6 +343,13 @@ function parseLinks(text: string): string {
 
     prev?.addEventListener('click', () => goTo(current - 1))
     next?.addEventListener('click', () => goTo(current + 1))
+
+    const container = root.querySelector<HTMLElement>('[data-slideshow-container]')
+    container?.addEventListener('click', (e) => {
+      if (!window.matchMedia('(pointer: coarse)').matches) return
+      if ((e.target as Element).closest('button')) return
+      goTo(current + 1)
+    })
 
     dots.forEach((dot) => {
       dot.addEventListener('click', () =>
