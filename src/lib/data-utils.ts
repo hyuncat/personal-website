@@ -30,6 +30,13 @@ export async function getAllProjects(): Promise<CollectionEntry<'projects'>[]> {
   })
 }
 
+export async function getAllArt(): Promise<CollectionEntry<'art'>[]> {
+  const art = await getCollection('art')
+  return art
+    .filter((piece) => !piece.data.draft)
+    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+}
+
 export async function getAllTags(): Promise<Map<string, number>> {
   const posts = await getAllPosts()
   return posts.reduce((acc, post) => {

@@ -1,0 +1,78 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import { Badge } from '@/components/ui/badge'
+import Layout from '@/layouts/Layout.astro'
+import { getAllArt } from '@/lib/data-utils'
+import { formatDate } from '@/lib/utils'
+import { Icon } from 'astro-icon/components'
+import { Image } from 'astro:assets'
+import { render } from 'astro:content'
+
+export async function getStaticPaths() {
+  const art = await getAllArt()
+  return art.map((piece) => ({
+    params: { id: piece.id },
+    props: piece,
+  }))
+}
+
+const piece = Astro.props
+const { Content } = await render(piece)
+---
+
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title={piece.data.title} description={piece.data.description} />
+  <Breadcrumbs
+    items={[
+      { href: '/art', label: 'Art', icon: 'lucide:palette' },
+      { label: piece.data.title, icon: 'lucide:image' },
+    ]}
+  />
+
+  <section class="flex flex-col gap-y-6">
+    <Image
+      src={piece.data.image}
+      alt={piece.data.title}
+      width={1600}
+      height={1600}
+      class="h-auto w-full rounded-xl object-contain"
+    />
+
+    <div class="flex flex-col gap-y-3 text-center">
+      <h1 class="text-3xl leading-tight font-medium sm:text-4xl">
+        {piece.data.title}
+      </h1>
+      {piece.data.description && <p class="text-muted-foreground">{piece.data.description}</p>}
+
+      <p class="text-muted-foreground/70 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
+        <span class="flex items-center gap-x-1.5">
+          <Icon name="lucide:calendar" class="size-3" />
+          <span>{formatDate(piece.data.date)}</span>
+        </span>
+        {
+          piece.data.medium && (
+            <span class="flex items-center gap-x-1.5">
+              <Icon name="lucide:brush" class="size-3" />
+              <span>{piece.data.medium}</span>
+            </span>
+          )
+        }
+      </p>
+
+      {
+        piece.data.tags && piece.data.tags.length > 0 && (
+          <div class="flex flex-wrap justify-center gap-2">
+            {piece.data.tags.map((tag: string) => (
+              <Badge variant="muted">{tag}</Badge>
+            ))}
+          </div>
+        )
+      }
+    </div>
+
+    <article class="prose max-w-none">
+      <Content />
+    </article>
+  </section>
+</Layout>

@@ -2,8 +2,7 @@ import type { IconMap, SocialLink, Site } from '@/types'
 
 export const SITE: Site = {
   title: "Sarah's Blog",
-  description:
-    'Art, programming, math, and assorted reflections.',
+  description: 'Art, programming, math, and assorted reflections.',
   href: 'https://hyuncat.com',
   author: 'sarah-hong',
   locale: 'en-US',
@@ -40,7 +39,6 @@ export const GISCUS = {
   mapping: 'pathname', // one discussion per page URL path
 }
 
-
 export const NAV_LINKS: SocialLink[] = [
   {
     href: '/',
@@ -61,6 +59,20 @@ export const NAV_LINKS: SocialLink[] = [
     href: '/about',
     label: 'About',
     icon: 'lucide:user',
+  },
+]
+
+// Sub-navigation shown on the /projects and /art pages
+export const PROJECT_NAV_LINKS: SocialLink[] = [
+  {
+    href: '/projects',
+    label: 'Code',
+    icon: 'lucide:folder-git-2',
+  },
+  {
+    href: '/art',
+    label: 'Art',
+    icon: 'lucide:palette',
   },
 ]
 

@@ -1,25 +1,27 @@
 ---
-import Link from '@/components/Link.astro'
+import PillNavBar from '@/components/PillNavBar.astro'
+import SearchButton from '@/components/react/SearchButton'
 import ThemeToggle from '@/components/ThemeToggle.astro'
 import MobileMenu from '@/components/ui/mobile-menu'
-import SearchButton from '@/components/react/SearchButton'
 import { NAV_LINKS } from '@/consts'
-import { Icon } from 'astro-icon/components'
-
-const isExternalLink = (href: string) => {
-  return href.startsWith('http')
-}
-
-const pathname = Astro.url.pathname
 ---
 
-<header class="bg-background/50 sticky top-0 z-10 backdrop-blur-md" transition:persist>
-  <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4 py-1 px-4">
-    <a href="/" class="flex shrink-0 items-center gap-2 text-xl font-medium self-stretch" data-astro-reload>
+<header
+  class="bg-background/50 sticky top-0 z-10 backdrop-blur-md"
+  transition:persist
+>
+  <div
+    class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4 px-4 py-1"
+  >
+    <a
+      href="/"
+      class="flex shrink-0 items-center gap-2 self-stretch text-xl font-medium"
+      data-astro-reload
+    >
       <img
         src="/static/cat_white.png"
         alt="Logo"
-        class="h-[80%] w-auto dark:block hidden transition-transform duration-200 hover:scale-105"
+        class="hidden h-[80%] w-auto transition-transform duration-200 hover:scale-105 dark:block"
         loading="eager"
         fetchpriority="high"
         transition:persist="logo-dark"
@@ -27,95 +29,20 @@ const pathname = Astro.url.pathname
       <img
         src="/static/cat_black.png"
         alt="Logo"
-        class="h-[80%] w-auto dark:hidden block transition-transform duration-200 hover:scale-105"
+        class="block h-[80%] w-auto transition-transform duration-200 hover:scale-105 dark:hidden"
         loading="eager"
         fetchpriority="high"
         transition:persist="logo-light"
       />
-     <!-- <span class="hidden min-[400px]:block">{SITE.title}</span> -->
+      <!-- <span class="hidden min-[400px]:block">{SITE.title}</span> -->
     </a>
     <div class="flex items-center gap-2 md:gap-4">
-      <nav id="pill-nav" class="hidden md:flex items-center bg-muted/25 dark:bg-muted/75 rounded-full p-1 text-sm gap-0 relative">
-        <span id="pill-indicator" class="absolute top-1 left-0 h-[calc(100%-0.5rem)] rounded-full bg-background shadow-sm transition-[transform,width] duration-300 ease-in-out pointer-events-none opacity-0" aria-hidden="true"></span>
-        {NAV_LINKS.map((item) => {
-          const isExternal = isExternalLink(item.href)
-          return (
-            <Link
-              href={item.href}
-              data-nav-href={item.href}
-              aria-label={item.label}
-              class="nav-pill group relative z-10 px-3 py-1.5 rounded-full transition-colors flex items-center justify-center text-foreground/60 hover:text-foreground"
-            >
-              {item.icon && <Icon name={item.icon} class="size-4" aria-hidden="true" />}
-              {isExternal && (
-                <Icon
-                  name="lucide:external-link"
-                  class="size-3.5 opacity-70 flex-shrink-0"
-                  aria-hidden="true"
-                />
-              )}
-              <span class="pointer-events-none absolute top-full mt-1.5 left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-xs text-foreground/70 bg-background/90 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
-                {item.label}
-              </span>
-            </Link>
-          )
-        })}
-      </nav>
-      <div class="hidden h-6 w-px bg-border/60 md:block" aria-hidden="true"></div>
+      <PillNavBar items={NAV_LINKS} class="hidden md:flex" transition:persist="nav-main" />
+      <div class="bg-border/60 hidden h-6 w-px md:block" aria-hidden="true">
+      </div>
       <SearchButton client:idle />
       <MobileMenu client:idle transition:persist />
       <ThemeToggle transition:persist />
     </div>
   </div>
 </header>
-
-<script>
-  // Position the pill over the active link. animate=false snaps instantly
-  // (first paint, font reflow, resize); animate=true slides (navigation).
-  function positionPill(animate: boolean) {
-    const indicator = document.getElementById('pill-indicator')
-    if (!indicator) return
-
-    const pathname = window.location.pathname
-    let activeLink: HTMLElement | null = null
-
-    document.querySelectorAll<HTMLElement>('.nav-pill').forEach((link) => {
-      const href = link.dataset.navHref ?? ''
-      const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
-      // Only toggle color, never font-weight: a weight change alters the link's
-      // width, which would make the pill jitter by a pixel or two between pages
-      // where the same tab stays active (e.g. /blog -> /blog/[post]).
-      link.classList.toggle('text-foreground', isActive)
-      link.classList.toggle('text-foreground/60', !isActive)
-      if (isActive) activeLink = link
-    })
-
-    if (!activeLink) {
-      indicator.style.opacity = '0'
-      return
-    }
-
-    const link = activeLink as HTMLElement
-    // Measure on the next frame so any web-font swap reflow has settled —
-    // otherwise width/offset read stale right after navigation.
-    requestAnimationFrame(() => {
-      if (!animate) indicator.style.transition = 'none'
-      // offsetLeft/offsetWidth are relative to the positioned nav parent
-      indicator.style.transform = `translateX(${link.offsetLeft}px)`
-      indicator.style.width = `${link.offsetWidth}px`
-      indicator.style.opacity = '1'
-      if (!animate) {
-        void indicator.offsetWidth // flush, then restore the CSS transition
-        indicator.style.transition = ''
-      }
-    })
-  }
-
-  // Initial paint: snap into place (no slide-in from the edge)
-  positionPill(false)
-  // Re-snap once the web font swaps in and reflows the pills
-  document.fonts?.ready.then(() => positionPill(false))
-  window.addEventListener('resize', () => positionPill(false))
-  // Header persists across client-side navigation, so slide to the new tab
-  document.addEventListener('astro:after-swap', () => positionPill(true))
-</script>

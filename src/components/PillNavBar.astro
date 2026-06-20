@@ -1,0 +1,120 @@
+---
+import Link from '@/components/Link.astro'
+import { cn } from '@/lib/utils'
+import { Icon } from 'astro-icon/components'
+
+export interface PillNavItem {
+  href: string
+  label: string
+  icon?: string
+}
+
+interface Props {
+  items: PillNavItem[]
+  /** Extra classes for the container (e.g. display / layout / margins). */
+  class?: string
+}
+
+const { items, class: className } = Astro.props
+
+const isExternalLink = (href: string) => href.startsWith('http')
+---
+
+<nav
+  data-pill-nav
+  class={cn(
+    'items-center bg-muted/25 dark:bg-muted/75 rounded-full p-1 text-sm gap-0 relative',
+    className,
+  )}
+>
+  <span
+    data-pill-indicator
+    class="bg-background pointer-events-none absolute top-1 left-0 h-[calc(100%-0.5rem)] rounded-full opacity-0 shadow-sm transition-[transform,width] duration-300 ease-in-out"
+    aria-hidden="true"></span>
+  {
+    items.map((item) => {
+      const isExternal = isExternalLink(item.href)
+      return (
+        <Link
+          href={item.href}
+          data-pill-href={item.href}
+          aria-label={item.label}
+          class="pill-item group text-foreground/60 hover:text-foreground relative z-10 flex items-center justify-center rounded-full px-3 py-1.5 transition-colors"
+        >
+          {item.icon && (
+            <Icon name={item.icon} class="size-4" aria-hidden="true" />
+          )}
+          {isExternal && (
+            <Icon
+              name="lucide:external-link"
+              class="size-3.5 flex-shrink-0 opacity-70"
+              aria-hidden="true"
+            />
+          )}
+          <span class="text-foreground/70 bg-background/90 pointer-events-none absolute top-full left-1/2 mt-1.5 -translate-x-1/2 rounded px-1.5 py-0.5 text-xs whitespace-nowrap opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100">
+            {item.label}
+          </span>
+        </Link>
+      )
+    })
+  }
+</nav>
+
+<script>
+  // Position the indicator over the active item within a single nav.
+  // animate=false snaps instantly (first paint, font reflow, resize);
+  // animate=true slides (navigation).
+  function positionPill(nav: HTMLElement, animate: boolean) {
+    const indicator = nav.querySelector<HTMLElement>('[data-pill-indicator]')
+    if (!indicator) return
+
+    const pathname = window.location.pathname
+    let activeLink: HTMLElement | null = null
+
+    nav.querySelectorAll<HTMLElement>('[data-pill-href]').forEach((link) => {
+      const href = link.dataset.pillHref ?? ''
+      const isActive =
+        pathname === href || (href !== '/' && pathname.startsWith(href))
+      // Only toggle color, never font-weight: a weight change alters the link's
+      // width, which would make the pill jitter by a pixel or two between pages
+      // where the same item stays active (e.g. /blog -> /blog/[post]).
+      link.classList.toggle('text-foreground', isActive)
+      link.classList.toggle('text-foreground/60', !isActive)
+      if (isActive) activeLink = link
+    })
+
+    if (!activeLink) {
+      indicator.style.opacity = '0'
+      return
+    }
+
+    const link = activeLink as HTMLElement
+    // Measure on the next frame so any web-font swap reflow has settled —
+    // otherwise width/offset read stale right after navigation.
+    requestAnimationFrame(() => {
+      if (!animate) indicator.style.transition = 'none'
+      // offsetLeft/offsetWidth are relative to the positioned nav parent
+      indicator.style.transform = `translateX(${link.offsetLeft}px)`
+      indicator.style.width = `${link.offsetWidth}px`
+      indicator.style.opacity = '1'
+      if (!animate) {
+        void indicator.offsetWidth // flush, then restore the CSS transition
+        indicator.style.transition = ''
+      }
+    })
+  }
+
+  function positionAll(animate: boolean) {
+    document
+      .querySelectorAll<HTMLElement>('[data-pill-nav]')
+      .forEach((nav) => positionPill(nav, animate))
+  }
+
+  // Initial paint: snap into place (no slide-in from the edge)
+  positionAll(false)
+  // Re-snap once the web font swaps in and reflows the items
+  document.fonts?.ready.then(() => positionAll(false))
+  window.addEventListener('resize', () => positionAll(false))
+  // Navs persist across client-side navigation, so slide to the new item
+  document.addEventListener('astro:after-swap', () => positionAll(true))
+</script>
